@@ -1,4 +1,4 @@
-import { Euler, LinearFilter, LinearMipmapLinearFilter, MathUtils, Quaternion, Texture, Vector3 } from 'three';
+import { Euler, LinearFilter, LinearMipmapLinearFilter, Loader, MathUtils, Quaternion, Texture, Vector3 } from 'three';
 import { PSVError } from '../PSVError';
 import { ExtendedPosition, Point, ResolvableBoolean } from '../model';
 import { getStyleProperty } from './browser';
@@ -84,6 +84,37 @@ export function getXMPValue(data: string, attr: string): number | null {
     }
 
     return null;
+}
+
+/**
+ * Calls a loader on normalize the progress from 0 to 100
+ */
+export function callLoaderWithProgress<T>(loader: Loader<T>, url: string, onProgress?: (p: number) => void): Promise<T> {
+    return new Promise((resolve, reject) => {
+        let progress = 0;
+        onProgress?.(progress);
+
+        loader.load(
+            url,
+            (result) => {
+                progress = 100;
+                onProgress?.(progress);
+                resolve(result);
+            },
+            (e) => {
+                if (e.lengthComputable) {
+                    const newProgress = (e.loaded / e.total) * 100;
+                    if (newProgress > progress) {
+                        progress = newProgress;
+                        onProgress?.(progress);
+                    }
+                }
+            },
+            (err) => {
+                reject(err);
+            }
+        );
+    });
 }
 
 const CSS_POSITIONS: Record<string, string> = {

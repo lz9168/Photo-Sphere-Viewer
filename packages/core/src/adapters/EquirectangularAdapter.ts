@@ -1,10 +1,10 @@
-import { BufferGeometry, MathUtils, Mesh, ShaderMaterial, SphereGeometry, Texture } from 'three';
+import { BufferGeometry, Loader, Material, MathUtils, Mesh, MeshBasicMaterial, SphereGeometry, Texture } from 'three';
 import { PSVError } from '../PSVError';
 import type { Viewer } from '../Viewer';
 import { SPHERE_RADIUS } from '../data/constants';
 import { SYSTEM } from '../data/system';
 import { PanoData, PanoDataProvider, PanoramaPosition, Position, TextureData } from '../model';
-import { createTexture, firstNonNull, getConfigParser, getXMPValue, isNil, logWarn } from '../utils';
+import { callLoaderWithProgress, createTexture, firstNonNull, getConfigParser, getXMPValue, isNil, logWarn } from '../utils';
 import { AbstractAdapter } from './AbstractAdapter';
 import { interpolationWorkerSrc } from './interpolationWorker';
 
@@ -36,9 +36,13 @@ export type EquirectangularAdapterConfig = {
      * @internal
      */
     blur?: boolean;
+    /**
+     * Custom texture loader, must extend ThreeJS `Loader` class
+     */
+    loader?: Loader<Texture>;
 };
 
-type EquirectangularMesh = Mesh<BufferGeometry, ShaderMaterial>;
+type EquirectangularMesh = Mesh<BufferGeometry, Material>;
 type EquirectangularTexture = TextureData<Texture, string, PanoData>;
 
 const getConfig = getConfigParser<EquirectangularAdapterConfig>(
@@ -48,6 +52,7 @@ const getConfig = getConfigParser<EquirectangularAdapterConfig>(
         resolution: 64,
         useXmpData: true,
         blur: false,
+        loader: null,
     },
     {
         resolution: (resolution) => {
@@ -66,7 +71,6 @@ export class EquirectangularAdapter extends AbstractAdapter<string, Texture, Pan
     static override readonly id: string = 'equirectangular';
     static override readonly VERSION = PKG_VERSION;
     static override readonly supportsDownload: boolean = true;
-    static override readonly supportsOverlay: boolean = true;
 
     private readonly config: EquirectangularAdapterConfig;
 
@@ -150,7 +154,13 @@ export class EquirectangularAdapter extends AbstractAdapter<string, Texture, Pan
             return Promise.reject(new PSVError('Invalid panorama url, are you using the right adapter?'));
         }
 
-        const blob = await this.viewer.textureLoader.loadFile(panorama, loader ? (p) => this.viewer.loader.setProgress(p) : null, panorama);
+        const onProgress = loader ? (p: number) => this.viewer.loader.setProgress(p) : null;
+
+        if (this.config.loader) {
+            return callLoaderWithProgress(this.config.loader, panorama, onProgress).then((texture) => ({ texture, panorama }));
+        }
+
+        const blob = await this.viewer.textureLoader.loadFile(panorama, onProgress, panorama);
         const xmpPanoData = useXmpPanoData ? await this.loadXMP(blob) : null;
         const img = await this.viewer.textureLoader.blobToImage(blob);
 
@@ -323,35 +333,20 @@ export class EquirectangularAdapter extends AbstractAdapter<string, Texture, Pan
             -Math.PI / 2
         ).scale(-1, 1, 1);
 
-        const material = AbstractAdapter.createOverlayMaterial();
-
-        return new Mesh(geometry, material);
+        return new Mesh(geometry, new MeshBasicMaterial());
     }
 
     setTexture(mesh: EquirectangularMesh, textureData: EquirectangularTexture) {
-        this.__setUniform(mesh, AbstractAdapter.OVERLAY_UNIFORMS.panorama, textureData.texture);
-    }
-
-    override setOverlay(mesh: EquirectangularMesh, textureData: EquirectangularTexture, opacity: number) {
-        this.__setUniform(mesh, AbstractAdapter.OVERLAY_UNIFORMS.overlayOpacity, opacity);
-        if (!textureData) {
-            this.__setUniform(mesh, AbstractAdapter.OVERLAY_UNIFORMS.overlay, null);
-        } else {
-            this.__setUniform(mesh, AbstractAdapter.OVERLAY_UNIFORMS.overlay, textureData.texture);
-        }
+        mesh.material.map = textureData.texture;
     }
 
     setTextureOpacity(mesh: EquirectangularMesh, opacity: number) {
-        this.__setUniform(mesh, AbstractAdapter.OVERLAY_UNIFORMS.globalOpacity, opacity);
+        mesh.material.opacity = opacity;
         mesh.material.transparent = opacity < 1;
     }
 
     disposeTexture(textureData: EquirectangularTexture) {
         textureData.texture?.dispose();
-    }
-
-    private __setUniform(mesh: EquirectangularMesh, uniform: string, value: any) {
-        mesh.material.uniforms[uniform].value = value;
     }
 
     private __defaultPanoData(img: HTMLImageElement): PanoData {

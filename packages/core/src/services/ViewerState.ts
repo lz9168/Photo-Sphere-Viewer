@@ -92,11 +92,6 @@ export class ViewerState {
     textureData: TextureData;
 
     /**
-     * Current overlay texture displayed
-     */
-    overlayData: TextureData;
-
-    /**
      * panorama metadata, if supported
      * @deprecated use `textureData.panoData` instead
      */

@@ -31,7 +31,6 @@ export abstract class AbstractVideoAdapter<
     TData
 > extends AbstractAdapter<TPanorama, VideoTexture, TData> {
     static override readonly supportsDownload = false;
-    static override readonly supportsOverlay = false;
 
     protected abstract readonly config: AbstractVideoAdapterConfig;
 

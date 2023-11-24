@@ -1,4 +1,4 @@
-import { Object3D, Texture, WebGLRendererParameters } from 'three';
+import { Object3D, Texture, ToneMapping, WebGLRendererParameters } from 'three';
 import { AdapterConstructor } from './adapters/AbstractAdapter';
 import { ACTIONS } from './data/constants';
 import { PluginConstructor } from './plugins/AbstractPlugin';
@@ -349,7 +349,10 @@ export type ViewerConfig = {
     /** @deprecated configure `backgroundColor` on EquirectangularAdapter */
     canvasBackground?: string;
     /** @default '{ alpha: true, antialias: true }' */
-    rendererParameters?: WebGLRendererParameters;
+    rendererParameters?: WebGLRendererParameters & {
+        toneMapping?: ToneMapping;
+        toneMappingExposure?: number;
+    };
     /** @default false */
     withCredentials?: boolean;
     /** @default 'zoom move download description caption fullscreen' */
@@ -409,6 +412,7 @@ export type ReadonlyViewerConfig =
     | 'overlayOpacity'
     | 'container'
     | 'adapter'
+    | 'rendererParameters'
     | 'plugins';
 
 /**

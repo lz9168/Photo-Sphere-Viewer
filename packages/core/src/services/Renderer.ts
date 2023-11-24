@@ -76,8 +76,13 @@ export class Renderer extends AbstractService {
 
         this.renderer = new WebGLRenderer(this.config.rendererParameters);
         this.renderer.setPixelRatio(SYSTEM.pixelRatio);
-        // https://discourse.threejs.org/t/updates-to-color-management-in-three-js-r152/50791
-        this.renderer.outputColorSpace = LinearSRGBColorSpace;
+        if (this.config.rendererParameters.toneMapping) {
+            this.renderer.toneMapping = this.config.rendererParameters.toneMapping;
+            this.renderer.toneMappingExposure = this.config.rendererParameters.toneMappingExposure ?? 1;
+        } else {
+            // https://discourse.threejs.org/t/updates-to-color-management-in-three-js-r152/50791
+            this.renderer.outputColorSpace = LinearSRGBColorSpace;
+        }
         this.renderer.domElement.className = 'psv-canvas';
 
         this.scene = new Scene();
@@ -243,10 +248,6 @@ export class Renderer extends AbstractService {
      * @internal
      */
     setTexture(textureData: TextureData) {
-        if ((this.viewer.adapter.constructor as typeof AbstractAdapter).supportsOverlay) {
-            this.setOverlay(null, 0);
-        }
-
         if (this.state.textureData) {
             this.viewer.adapter.disposeTexture(this.state.textureData);
         }
@@ -254,21 +255,6 @@ export class Renderer extends AbstractService {
         this.state.textureData = textureData;
 
         this.viewer.adapter.setTexture(this.mesh, textureData);
-
-        this.viewer.needsUpdate();
-    }
-
-    /**
-     * @deprecated
-     */
-    setOverlay(textureData: TextureData, opacity: number) {
-        if (this.state.overlayData) {
-            this.viewer.adapter.disposeTexture(this.state.overlayData);
-        }
-
-        this.state.overlayData = textureData;
-
-        this.viewer.adapter.setOverlay(this.mesh, textureData, opacity);
 
         this.viewer.needsUpdate();
     }

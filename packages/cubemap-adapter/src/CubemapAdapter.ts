@@ -1,6 +1,6 @@
 import type { PanoramaPosition, Position, TextureData, Viewer } from '@photo-sphere-viewer/core';
 import { AbstractAdapter, CONSTANTS, PSVError, SYSTEM, utils } from '@photo-sphere-viewer/core';
-import { BoxGeometry, MathUtils, Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
+import { BoxGeometry, MathUtils, Mesh, MeshBasicMaterial, Texture, Vector2, Vector3 } from 'three';
 import {
     Cubemap,
     CubemapAdapterConfig,
@@ -13,7 +13,7 @@ import {
 } from './model';
 import { cleanCubemap, cleanCubemapArray, isCubemap } from './utils';
 
-type CubemapMesh = Mesh<BoxGeometry, ShaderMaterial[]>;
+type CubemapMesh = Mesh<BoxGeometry, MeshBasicMaterial[]>;
 type CubemapTexture = TextureData<Texture[], CubemapPanorama, CubemapData>;
 
 const getConfig = utils.getConfigParser<CubemapAdapterConfig>(
@@ -41,7 +41,6 @@ export class CubemapAdapter extends AbstractAdapter<CubemapPanorama, Texture[], 
     static override readonly id = 'cubemap';
     static override readonly VERSION = PKG_VERSION;
     static override readonly supportsDownload = false;
-    static override readonly supportsOverlay = true;
 
     private readonly config: CubemapAdapterConfig;
 
@@ -360,28 +359,7 @@ export class CubemapAdapter extends AbstractAdapter<CubemapPanorama, Texture[], 
 
         const materials = [];
         for (let i = 0; i < 6; i++) {
-            materials.push(
-                AbstractAdapter.createOverlayMaterial({
-                    additionalUniforms: {
-                        rotation: { value: 0.0 },
-                    },
-                    overrideVertexShader: `
-uniform float rotation;
-varying vec2 vUv;
-const float mid = 0.5;
-void main() {
-  if (rotation == 0.0) {
-    vUv = uv;
-  } else {
-    vUv = vec2(
-      cos(rotation) * (uv.x - mid) + sin(rotation) * (uv.y - mid) + mid,
-      cos(rotation) * (uv.y - mid) - sin(rotation) * (uv.x - mid) + mid
-    );
-  }
-  gl_Position = projectionMatrix *  modelViewMatrix * vec4( position, 1.0 );
-}`,
-                })
-            );
+            materials.push(new MeshBasicMaterial());
         }
 
         return new Mesh(geometry, materials);
@@ -392,27 +370,17 @@ void main() {
 
         for (let i = 0; i < 6; i++) {
             if (panoData.flipTopBottom && (i === 2 || i === 3)) {
-                this.__setUniform(mesh, i, 'rotation', Math.PI);
+                texture[i].center = new Vector2(0.5, 0.5);
+                texture[i].rotation = Math.PI;
             }
 
-            this.__setUniform(mesh, i, AbstractAdapter.OVERLAY_UNIFORMS.panorama, texture[i]);
-        }
-    }
-
-    override setOverlay(mesh: CubemapMesh, textureData: CubemapTexture, opacity: number) {
-        for (let i = 0; i < 6; i++) {
-            this.__setUniform(mesh, i, AbstractAdapter.OVERLAY_UNIFORMS.overlayOpacity, opacity);
-            if (!textureData) {
-                this.__setUniform(mesh, i, AbstractAdapter.OVERLAY_UNIFORMS.overlay, null);
-            } else {
-                this.__setUniform(mesh, i, AbstractAdapter.OVERLAY_UNIFORMS.overlay, textureData.texture[i]);
-            }
+            mesh.material[i].map = texture[i];
         }
     }
 
     setTextureOpacity(mesh: CubemapMesh, opacity: number) {
         for (let i = 0; i < 6; i++) {
-            this.__setUniform(mesh, i, AbstractAdapter.OVERLAY_UNIFORMS.globalOpacity, opacity);
+            mesh.material[i].opacity = opacity;
             mesh.material[i].transparent = opacity < 1;
         }
     }
@@ -421,7 +389,4 @@ void main() {
         textureData.texture?.forEach((texture) => texture.dispose());
     }
 
-    private __setUniform(mesh: CubemapMesh, index: number, uniform: string, value: any) {
-        mesh.material[index].uniforms[uniform].value = value;
-    }
 }

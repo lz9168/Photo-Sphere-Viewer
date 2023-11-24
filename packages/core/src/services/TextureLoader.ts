@@ -3,6 +3,7 @@ import { PSVError } from '../PSVError';
 import type { Viewer } from '../Viewer';
 import { Cache } from '../data/cache';
 import { AbstractService } from './AbstractService';
+import { callLoaderWithProgress } from '../utils';
 
 /**
  * Image and texture loading system
@@ -64,32 +65,11 @@ export class TextureLoader extends AbstractService {
             this.fileLoader.setRequestHeader(this.config.requestHeaders(url));
         }
 
-        return new Promise((resolve, reject) => {
-            let progress = 0;
-            onProgress?.(progress);
-
-            this.fileLoader.load(
-                url,
-                (result) => {
-                    progress = 100;
-                    onProgress?.(progress);
-                    Cache.add(url, cacheKey, result as any);
-                    resolve(result as any);
-                },
-                (e) => {
-                    if (e.lengthComputable) {
-                        const newProgress = (e.loaded / e.total) * 100;
-                        if (newProgress > progress) {
-                            progress = newProgress;
-                            onProgress?.(progress);
-                        }
-                    }
-                },
-                (err) => {
-                    reject(err);
-                }
-            );
-        });
+        return callLoaderWithProgress(this.fileLoader, url, onProgress)
+            .then(result => {
+                Cache.add(url, cacheKey, result as any);
+                return result as any;
+            });
     }
 
     /**

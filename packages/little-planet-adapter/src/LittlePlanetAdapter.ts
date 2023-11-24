@@ -1,10 +1,10 @@
 import type { EquirectangularAdapterConfig, Position, Size, TextureData, Viewer } from '@photo-sphere-viewer/core';
 import { EquirectangularAdapter, events } from '@photo-sphere-viewer/core';
-import { BufferGeometry, Euler, MathUtils, Matrix4, Mesh, PlaneGeometry, ShaderMaterial, Texture } from 'three';
+import { BufferGeometry, Euler, Material, MathUtils, Matrix4, Mesh, PlaneGeometry, ShaderMaterial, Texture } from 'three';
 import littlePlanetFragment from './shaders/littlePlanet.fragment.glsl';
 import littlePlanetVertex from './shaders/littlePlanet.vertex.glsl';
 
-type EquirectangularMesh = Mesh<BufferGeometry, ShaderMaterial>;
+type EquirectangularMesh = Mesh<BufferGeometry, Material>;
 type EquirectangularTexture = TextureData<Texture, string>;
 
 type ShaderUniforms = {
@@ -24,7 +24,6 @@ export class LittlePlanetAdapter extends EquirectangularAdapter {
     static override readonly id = 'little-planet';
     static override readonly VERSION = PKG_VERSION;
     static override readonly supportsDownload = true;
-    static override readonly supportsOverlay = false;
 
     private uniforms: ShaderUniforms;
 
@@ -92,8 +91,9 @@ export class LittlePlanetAdapter extends EquirectangularAdapter {
     }
 
     override setTexture(mesh: EquirectangularMesh, textureData: EquirectangularTexture) {
-        mesh.material.uniforms.panorama.value.dispose();
-        mesh.material.uniforms.panorama.value = textureData.texture;
+        const material = mesh.material as ShaderMaterial;
+        material.uniforms.panorama.value.dispose();
+        material.uniforms.panorama.value = textureData.texture;
     }
 
     private __setResolution(size: Size) {

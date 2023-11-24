@@ -93,6 +93,7 @@ export const READONLY_OPTIONS: Record<ReadonlyViewerConfig, string> = {
     overlayOpacity: 'Use setOverlay method to changer the overlay',
     container: 'Cannot change viewer container',
     adapter: 'Cannot change adapter',
+    rendererParameters: 'Cannot change rendererParameters',
     plugins: 'Cannot change plugins',
 };
 
@@ -122,9 +123,6 @@ export const CONFIG_PARSERS: ConfigParsers<ViewerConfig, ParsedViewerConfig> = {
             throw new PSVError(`Adapter has no id.`);
         }
         return adapter;
-    },
-    overlayOpacity: (overlayOpacity) => {
-        return MathUtils.clamp(overlayOpacity, 0, 1);
     },
     defaultYaw: (defaultYaw) => {
         // defaultYaw is between 0 and PI
@@ -248,7 +246,7 @@ export const CONFIG_PARSERS: ConfigParsers<ViewerConfig, ParsedViewerConfig> = {
         if (overlay !== null) {
             logWarn(`"overlay" option is deprecated, use "@photo-sphere-viewer/overlay-plugin" instead.`);
         }
-        return overlay;
+        return null;
     },
 };
 

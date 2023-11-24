@@ -110,7 +110,6 @@ export class EquirectangularTilesAdapter extends AbstractAdapter<
     static override readonly id = 'equirectangular-tiles';
     static override readonly VERSION = PKG_VERSION;
     static override readonly supportsDownload = false;
-    static override readonly supportsOverlay = false;
 
     // @internal
     public readonly SPHERE_SEGMENTS: number;
