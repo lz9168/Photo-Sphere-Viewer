@@ -265,7 +265,7 @@ export class DataHelper extends AbstractService {
         if ('yaw' in position && 'pitch' in position) {
             return {
                 yaw: parseAngle(position.yaw),
-                pitch: parseAngle(position.pitch, !this.state.littlePlanet),
+                pitch: parseAngle(position.pitch, true),
             };
         } else {
             return this.textureCoordsToSphericalCoords(position);

@@ -652,11 +652,11 @@ export class EventsHandler extends AbstractService {
             yaw:
                 this.config.moveSpeed
                 * ((clientX - this.data.mouseX) / this.state.size.width)
-                * MathUtils.degToRad(this.state.littlePlanet ? 90 : this.state.hFov),
+                * MathUtils.degToRad(this.state.hFov),
             pitch:
                 this.config.moveSpeed
                 * ((clientY - this.data.mouseY) / this.state.size.height)
-                * MathUtils.degToRad(this.state.littlePlanet ? 90 : this.state.vFov),
+                * MathUtils.degToRad(this.state.vFov),
         };
 
         const currentPosition = this.viewer.getPosition();

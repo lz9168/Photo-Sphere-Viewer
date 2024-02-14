@@ -348,10 +348,10 @@ export class EquirectangularAdapter extends AbstractAdapter<string, Texture, Pan
         return createTexture(img);
     }
 
-    createMesh(scale = 1): EquirectangularMesh {
+    createMesh(): EquirectangularMesh {
         // The middle of the panorama is placed at yaw=0
         const geometry = new SphereGeometry(
-            SPHERE_RADIUS * scale,
+            SPHERE_RADIUS,
             this.SPHERE_SEGMENTS,
             this.SPHERE_HORIZONTAL_SEGMENTS,
             -Math.PI / 2
