@@ -21,21 +21,21 @@ export type GpsPosition = [number, number, number?];
  */
 export type VirtualTourArrowStyle = {
     /**
-     * @default '#aaaaaa'
+     * URL of an image used for the arrow
      */
-    color?: string;
+    image?: string;
     /**
-     * @default '#aa5500'
+     * Use a custom element for the arrow
      */
-    hoverColor?: string;
+    element?: HTMLElement | ((link: VirtualTourLink) => HTMLElement);
     /**
-     * @default '#000000'
+     * CSS classes added to the element
      */
-    outlineColor?: string;
+    className?: string;
     /**
-     * @default 1
+     * Size of the arrow
      */
-    size?: number;
+    size?: Size;
 };
 
 /**
@@ -253,10 +253,20 @@ export type VirtualTourPluginConfig = {
      */
     markerPitchOffset?: number;
     /**
-     * (3D mode) arrows vertical position
-     * @default 'bottom'
+     * (3D mode) configuration of the arrows container
      */
-    arrowPosition?: 'top' | 'bottom';
+    arrowsPosition?: {
+        /**
+         * Minimal view angle
+         * @default 0.3
+         */
+        minAngle?: number;
+        /**
+         * Maximal view angle
+         * @default PI/2
+         */
+        maxAngle?: number;
+    };
     /**
      * special configuration when using the MapPlugin
      */

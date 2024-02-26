@@ -44,6 +44,15 @@ $psv-virtual-tour-link-button-ring: rgb(97, 170, 242) !default;
     }
 }
 
+.psv-virtual-tour-arrows {
+    position: absolute;
+    overflow: visible !important;
+    z-index: $psv-hud-zindex + 1;
+    bottom: 0;
+    left: 0;
+    filter: drop-shadow(0 10px 2px rgba(0, 0, 0, 0.7));
+}
+
 .psv-virtual-tour-link {
     width: 100%;
     height: 100%;
@@ -53,7 +62,10 @@ $psv-virtual-tour-link-button-ring: rgb(97, 170, 242) !default;
     color: $psv-virtual-tour-link-button-color;
     border-radius: 50%;
     cursor: pointer;
-    filter: drop-shadow(0 10px 5px rgba(0, 0, 0, 0.2));
+
+    @at-root .psv-markers & {
+        filter: drop-shadow(0 10px 5px rgba(0, 0, 0, 0.2));
+    }
 
     &:hover {
         animation: psv-virtual-tour-link-button-in 1s ease-out forwards;
